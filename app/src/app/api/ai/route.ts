@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { explainEndpoint, troubleshootError } from '@/lib/bedrock-client';
+import { explainEndpoint, troubleshootError } from '@/lib/gemini-client';
 import { Endpoint, ApiSpec } from '@/lib/types';
 
 interface AiRequestBody {
@@ -47,24 +47,20 @@ export async function POST(request: NextRequest) {
     } catch (err) {
         const message = err instanceof Error ? err.message : 'AI request failed';
 
-        // Check for common AWS credential errors
-        if (message.includes('Could not load credentials') ||
-            message.includes('CredentialsProviderError') ||
-            message.includes('Missing credentials')) {
+        // Check for missing API key
+        if (message.includes('GEMINI_API_KEY') || message.includes('API key')) {
             return NextResponse.json({
-                error: 'AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables, or configure ~/.aws/credentials.',
+                error: 'Gemini API key not configured. Set GEMINI_API_KEY environment variable. Get a free key at https://aistudio.google.com/apikey',
                 hint: 'credentials',
             }, { status: 503 });
         }
 
-        // Check for access denied / model not enabled
-        if (message.includes('AccessDeniedException') ||
-            message.includes('is not authorized') ||
-            message.includes('not enabled')) {
+        // Check for quota / rate limit errors
+        if (message.includes('429') || message.includes('quota') || message.includes('RATE_LIMIT')) {
             return NextResponse.json({
-                error: 'Access denied. Ensure the Bedrock model is enabled in your AWS account and your IAM user/role has bedrock:InvokeModel permission.',
-                hint: 'access',
-            }, { status: 403 });
+                error: 'Gemini API rate limit reached. Please wait a moment and try again.',
+                hint: 'rate_limit',
+            }, { status: 429 });
         }
 
         return NextResponse.json({ error: message }, { status: 500 });

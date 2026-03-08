@@ -1,57 +1,40 @@
-// ─── Amazon Bedrock Client for HelloAPI ───
+// ─── Google Gemini AI Client for HelloAPI ───
 // Provides AI-powered endpoint explanations and error troubleshooting
-// using Claude via AWS Bedrock.
+// using Google Gemini (free tier).
 
-import {
-    BedrockRuntimeClient,
-    InvokeModelCommand,
-} from '@aws-sdk/client-bedrock-runtime';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Endpoint, ApiSpec } from './types';
 
-// ─── Configuration (via env vars with sensible defaults) ───
-const REGION = process.env.AWS_BEDROCK_REGION || process.env.AWS_REGION || 'us-east-1';
-const MODEL_ID = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
+// ─── Configuration ───
+const API_KEY = process.env.GEMINI_API_KEY || '';
+const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
-let client: BedrockRuntimeClient | null = null;
+let genAI: GoogleGenerativeAI | null = null;
 
-function getClient(): BedrockRuntimeClient {
-    if (!client) {
-        client = new BedrockRuntimeClient({ region: REGION });
+function getClient(): GoogleGenerativeAI {
+    if (!API_KEY) {
+        throw new Error('GEMINI_API_KEY environment variable is not set. Get a free key at https://aistudio.google.com/apikey');
     }
-    return client;
+    if (!genAI) {
+        genAI = new GoogleGenerativeAI(API_KEY);
+    }
+    return genAI;
 }
 
-// ─── Helper: Invoke Claude via Bedrock ───
-async function invokeModel(prompt: string, maxTokens = 1024): Promise<string> {
-    const bedrockClient = getClient();
+// ─── Helper: Invoke Gemini ───
+async function invokeModel(prompt: string): Promise<string> {
+    const client = getClient();
+    const model = client.getGenerativeModel({ model: MODEL_NAME });
 
-    const payload = {
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: maxTokens,
-        messages: [
-            {
-                role: 'user',
-                content: prompt,
-            },
-        ],
-    };
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
 
-    const command = new InvokeModelCommand({
-        modelId: MODEL_ID,
-        contentType: 'application/json',
-        accept: 'application/json',
-        body: JSON.stringify(payload),
-    });
-
-    const response = await bedrockClient.send(command);
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-
-    // Claude response format: { content: [{ type: "text", text: "..." }] }
-    if (responseBody.content && responseBody.content.length > 0) {
-        return responseBody.content[0].text;
+    if (!text) {
+        throw new Error('Empty response from Gemini model');
     }
 
-    throw new Error('Empty response from Bedrock model');
+    return text;
 }
 
 // ─── Build context string from API spec ───
