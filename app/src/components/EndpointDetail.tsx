@@ -38,6 +38,44 @@ export default function EndpointDetail() {
     const [aiExplainError, setAiExplainError] = useState<string | null>(null);
     const [showAiExplain, setShowAiExplain] = useState(false);
 
+    // AI Explain handler - must be before early return to maintain hook order
+    const handleAiExplain = useCallback(async () => {
+        if (!selectedEndpoint || !spec) return;
+        
+        if (aiExplanation) {
+            setShowAiExplain(!showAiExplain);
+            return;
+        }
+
+        setAiExplainLoading(true);
+        setAiExplainError(null);
+        setShowAiExplain(true);
+
+        try {
+            const res = await fetch('/api/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'explain',
+                    endpoint: selectedEndpoint,
+                    spec: { title: spec.title, baseUrl: spec.baseUrl, auth: spec.auth, description: spec.description },
+                }),
+            });
+
+            const data: AiResponse = await res.json();
+
+            if (!res.ok || data.error) {
+                setAiExplainError(data.error || 'AI request failed');
+            } else {
+                setAiExplanation(data.result || '');
+            }
+        } catch {
+            setAiExplainError('Failed to connect to AI service. Check your network and AWS credentials.');
+        } finally {
+            setAiExplainLoading(false);
+        }
+    }, [selectedEndpoint, spec, aiExplanation, showAiExplain]);
+
     if (!selectedEndpoint || !spec) {
         return (
             <div className="endpoint-detail empty">
@@ -163,41 +201,7 @@ export default function EndpointDetail() {
         }
     };
 
-    // AI Explain handler
-    const handleAiExplain = useCallback(async () => {
-        if (aiExplanation) {
-            setShowAiExplain(!showAiExplain);
-            return;
-        }
 
-        setAiExplainLoading(true);
-        setAiExplainError(null);
-        setShowAiExplain(true);
-
-        try {
-            const res = await fetch('/api/ai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'explain',
-                    endpoint: ep,
-                    spec: { title: spec.title, baseUrl: spec.baseUrl, auth: spec.auth, description: spec.description },
-                }),
-            });
-
-            const data: AiResponse = await res.json();
-
-            if (!res.ok || data.error) {
-                setAiExplainError(data.error || 'AI request failed');
-            } else {
-                setAiExplanation(data.result || '');
-            }
-        } catch {
-            setAiExplainError('Failed to connect to AI service. Check your network and AWS credentials.');
-        } finally {
-            setAiExplainLoading(false);
-        }
-    }, [ep, spec, aiExplanation, showAiExplain]);
 
     // Determine auth placeholder based on auth type
     const authPlaceholder = (() => {
