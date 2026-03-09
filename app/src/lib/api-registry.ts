@@ -39,11 +39,24 @@ let cachedList: RegistryApi[] | null = null;
 async function fetchFullList(): Promise<RegistryApi[]> {
     if (cachedList) return cachedList;
 
-    const res = await fetch(APIS_GURU_LIST_URL, {
-        next: { revalidate: 3600 }, // cache for 1 hour in Next.js
-    });
+    // AbortController for timeout — compatible with all Node.js 16+ environments
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
 
-    if (!res.ok) throw new Error(`APIs.guru fetch failed: ${res.status}`);
+    let res: Response;
+    try {
+        res = await fetch(APIS_GURU_LIST_URL, {
+            // 'no-store' works in all deployment modes (standalone, serverless, containers)
+            // next: { revalidate } only works properly on Vercel/ISR-enabled deployments
+            cache: 'no-store',
+            signal: controller.signal,
+            headers: { 'User-Agent': 'HelloAPI/1.0' },
+        });
+    } finally {
+        clearTimeout(timer);
+    }
+
+    if (!res.ok) throw new Error(`APIs.guru fetch failed: ${res.status} ${res.statusText}`);
 
     const raw: Record<string, GuruApi> = await res.json();
 

@@ -33,14 +33,23 @@ export async function POST(request: NextRequest) {
         let lastError = '';
         for (const headers of fetchAttempts) {
             try {
-                const res = await fetch(url, {
-                    headers: {
-                        ...headers,
-                        'User-Agent': 'HelloAPI/1.0 (OpenAPI Explorer)',
-                    },
-                    redirect: 'follow',
-                    signal: AbortSignal.timeout(20000), // 20s — some spec endpoints are slow
-                });
+                // AbortSignal.timeout is Node 17.3+ — use AbortController for broader compat
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 20000);
+
+                let res: Response;
+                try {
+                    res = await fetch(url, {
+                        headers: {
+                            ...headers,
+                            'User-Agent': 'HelloAPI/1.0 (OpenAPI Explorer)',
+                        },
+                        redirect: 'follow',
+                        signal: controller.signal,
+                    });
+                } finally {
+                    clearTimeout(timer);
+                }
 
                 if (!res.ok) {
                     lastError = `HTTP ${res.status}: ${res.statusText}`;
@@ -87,7 +96,7 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ content: text });
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                if (msg.toLowerCase().includes('timeout') || msg.includes('TimeoutError')) {
+                if (err instanceof Error && (err.name === 'AbortError' || msg.toLowerCase().includes('timeout') || msg.includes('TimeoutError'))) {
                     return NextResponse.json(
                         { error: 'Request timed out (20s). The spec server is too slow. Try the URL directly and paste the content.' },
                         { status: 504 }
