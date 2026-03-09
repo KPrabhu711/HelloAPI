@@ -16,6 +16,21 @@ function PathIcon({ name }: { name: string }) {
     return <>{PATH_ICONS[name] ?? <IconBook size={22} />}</>;
 }
 
+/** Renders a string with **bold** and `code` inline markdown into React nodes. */
+function renderInlineMd(text: string): React.ReactNode[] {
+    // Split on **bold** and `code` patterns
+    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('`') && part.endsWith('`')) {
+            return <code key={i} className="inline-code">{part.slice(1, -1)}</code>;
+        }
+        return part;
+    });
+}
+
 export default function LearningPathView() {
     const { learningPaths, selectEndpoint, spec } = useApi();
     const [activePath, setActivePath] = useState<LearningPath | null>(null);
@@ -88,7 +103,7 @@ export default function LearningPathView() {
                 <h3 className="step-title">{step.title}</h3>
                 <p className="step-description">{step.description}</p>
                 <div className="step-body">
-                    <p>{step.content}</p>
+                    <p>{renderInlineMd(step.content)}</p>
                 </div>
                 {step.endpointId && (
                     <button
