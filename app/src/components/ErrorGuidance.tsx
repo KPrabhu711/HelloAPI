@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useApi } from '@/context/ApiContext';
 import { getErrorGuidance } from '@/lib/generators/error-guidance';
 import { AiResponse } from '@/lib/types';
+import { IconCpu, IconWarn } from '@/components/Icons';
 
 interface ApiResponse {
     status: number;
@@ -85,7 +86,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
                             {aiLoading ? (
                                 <><span className="spinner" /> Analyzing...</>
                             ) : (
-                                <>🤖 AI Troubleshoot</>
+                                <><IconCpu size={14} /> AI Troubleshoot</>
                             )}
                         </button>
                     </div>
@@ -105,7 +106,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
                     {aiError && (
                         <div className="ai-panel ai-troubleshoot-panel">
                             <div className="ai-panel-body">
-                                <div className="ai-error"><span>⚠️</span> {aiError}</div>
+                                <div className="ai-error"><IconWarn size={14} /> {aiError}</div>
                             </div>
                         </div>
                     )}
@@ -113,7 +114,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
                     {aiTroubleshoot && (
                         <div className="ai-panel ai-troubleshoot-panel">
                             <div className="ai-panel-header">
-                                <span className="ai-panel-icon">🤖</span>
+                                <span className="ai-panel-icon"><IconCpu size={15} /></span>
                                 <span className="ai-panel-title">AI Troubleshooting</span>
                             </div>
                             <div className="ai-panel-body">
@@ -126,7 +127,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
 
             {/* Static Error Guidance */}
             <h4 className="error-guidance-title">
-                <span>⚠️</span> Common Errors & Fixes
+                <IconWarn size={15} /> Common Errors &amp; Fixes
             </h4>
             <div className="error-list">
                 {errors.map((err) => (

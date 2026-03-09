@@ -2,14 +2,16 @@
 
 import React, { useState } from 'react';
 import { Endpoint, Parameter, SchemaField } from '@/lib/types';
+import { IconLink, IconSearch, IconClipboard, IconDocument } from '@/components/Icons';
 
 interface Props {
     endpoint: Endpoint;
     values: Record<string, string>;
     onChange: (values: Record<string, string>) => void;
+    missingFields?: string[];
 }
 
-export default function ParameterForm({ endpoint, values, onChange }: Props) {
+export default function ParameterForm({ endpoint, values, onChange, missingFields = [] }: Props) {
     const [expandedBody, setExpandedBody] = useState(true);
 
     const handleChange = (name: string, value: string) => {
@@ -25,27 +27,27 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
             {pathParams.length > 0 && (
                 <div className="param-section">
                     <h4 className="param-section-title">
-                        <span className="param-icon">🔗</span> Path Parameters
+                        <IconLink size={13} /> Path Parameters
                     </h4>
-                    {pathParams.map(p => renderParamInput(p, values, handleChange))}
+                    {pathParams.map(p => renderParamInput(p, values, handleChange, missingFields))}
                 </div>
             )}
 
             {queryParams.length > 0 && (
                 <div className="param-section">
                     <h4 className="param-section-title">
-                        <span className="param-icon">🔍</span> Query Parameters
+                        <IconSearch size={13} /> Query Parameters
                     </h4>
-                    {queryParams.map(p => renderParamInput(p, values, handleChange))}
+                    {queryParams.map(p => renderParamInput(p, values, handleChange, missingFields))}
                 </div>
             )}
 
             {headerParams.length > 0 && (
                 <div className="param-section">
                     <h4 className="param-section-title">
-                        <span className="param-icon">📋</span> Headers
+                        <IconClipboard size={13} /> Headers
                     </h4>
-                    {headerParams.map(p => renderParamInput(p, values, handleChange))}
+                    {headerParams.map(p => renderParamInput(p, values, handleChange, missingFields))}
                 </div>
             )}
 
@@ -55,12 +57,12 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
                         className="param-section-title clickable"
                         onClick={() => setExpandedBody(!expandedBody)}
                     >
-                        <span className="param-icon">📦</span> Request Body
+                        <IconDocument size={13} /> Request Body
                         <span className="expand-icon">{expandedBody ? '▾' : '▸'}</span>
                     </h4>
                     {expandedBody && (
                         <div className="body-fields">
-                            {endpoint.requestBody.schema.map(field => renderSchemaField(field, values, handleChange))}
+                            {endpoint.requestBody.schema.map(field => renderSchemaField(field, values, handleChange, missingFields))}
                         </div>
                     )}
                 </div>
@@ -79,10 +81,12 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
 function renderParamInput(
     param: Parameter,
     values: Record<string, string>,
-    onChange: (name: string, value: string) => void
+    onChange: (name: string, value: string) => void,
+    missingFields: string[] = [],
 ) {
+    const isMissing = missingFields.includes(param.name);
     return (
-        <div key={param.name} className="param-field">
+        <div key={param.name} className={`param-field${isMissing ? ' field-missing' : ''}`}>
             <label className="param-label">
                 <span className="param-name">{param.name}</span>
                 {param.required && <span className="required-badge">required</span>}
@@ -114,7 +118,8 @@ function renderParamInput(
 function renderSchemaField(
     field: SchemaField,
     values: Record<string, string>,
-    onChange: (name: string, value: string) => void
+    onChange: (name: string, value: string) => void,
+    missingFields: string[] = [],
 ) {
     if (field.type === 'object' && field.nested) {
         return (
@@ -125,14 +130,15 @@ function renderSchemaField(
                     <span className="param-type">object</span>
                 </label>
                 <div className="nested-fields">
-                    {field.nested.map(f => renderSchemaField(f, values, onChange))}
+                    {field.nested.map(f => renderSchemaField(f, values, onChange, missingFields))}
                 </div>
             </div>
         );
     }
 
+    const isMissing = missingFields.includes(field.name);
     return (
-        <div key={field.name} className="param-field">
+        <div key={field.name} className={`param-field${isMissing ? ' field-missing' : ''}`}>
             <label className="param-label">
                 <span className="param-name">{field.name}</span>
                 {field.required && <span className="required-badge">required</span>}
