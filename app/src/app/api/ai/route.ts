@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { explainEndpoint, troubleshootError } from '@/lib/gemini-client';
+import * as groqClient from '@/lib/groq-client';
 import { Endpoint, ApiSpec } from '@/lib/types';
 
 interface AiRequestBody {
-    action: 'explain' | 'troubleshoot';
-    endpoint: Endpoint;
+    action: 'explain' | 'troubleshoot' | 'overview';
+    endpoint?: Endpoint;
     spec: Partial<ApiSpec>;
+    provider?: string; // kept for backwards compat, ignored — always uses Groq
     error?: {
         status: number;
         body: unknown;
@@ -17,25 +18,30 @@ export async function POST(request: NextRequest) {
         const body: AiRequestBody = await request.json();
         const { action, endpoint, spec, error } = body;
 
-        if (!action || !endpoint) {
+        if (!action) {
             return NextResponse.json(
-                { error: 'Missing required fields: action, endpoint' },
+                { error: 'Missing required field: action' },
                 { status: 400 }
             );
         }
 
+        const client = groqClient;
         let result: string;
 
-        if (action === 'explain') {
-            result = await explainEndpoint(endpoint, spec || {});
+        if (action === 'overview') {
+            result = await client.generateApiOverview(spec || {});
+        } else if (action === 'explain') {
+            if (!endpoint) return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
+            result = await client.explainEndpoint(endpoint, spec || {});
         } else if (action === 'troubleshoot') {
+            if (!endpoint) return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
             if (!error || !error.status) {
                 return NextResponse.json(
                     { error: 'Missing error details for troubleshoot action' },
                     { status: 400 }
                 );
             }
-            result = await troubleshootError(error.status, error.body, endpoint, spec || {});
+            result = await client.troubleshootError(error.status, error.body, endpoint, spec || {});
         } else {
             return NextResponse.json(
                 { error: `Unknown action: ${action}` },
@@ -47,18 +53,16 @@ export async function POST(request: NextRequest) {
     } catch (err) {
         const message = err instanceof Error ? err.message : 'AI request failed';
 
-        // Check for missing API key
-        if (message.includes('GEMINI_API_KEY') || message.includes('API key')) {
+        if (message.includes('GEMINI_API_KEY') || message.includes('GROQ_API_KEY') || message.includes('API key')) {
             return NextResponse.json({
-                error: 'Gemini API key not configured. Set GEMINI_API_KEY environment variable. Get a free key at https://aistudio.google.com/apikey',
+                error: message,
                 hint: 'credentials',
             }, { status: 503 });
         }
 
-        // Check for quota / rate limit errors
-        if (message.includes('429') || message.includes('quota') || message.includes('RATE_LIMIT')) {
+        if (message.includes('429') || message.includes('quota') || message.includes('RATE_LIMIT') || message.includes('rate_limit')) {
             return NextResponse.json({
-                error: 'Gemini API rate limit reached. Please wait a moment and try again.',
+                error: 'AI API rate limit reached. Please wait a moment and try again.',
                 hint: 'rate_limit',
             }, { status: 429 });
         }

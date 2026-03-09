@@ -2,8 +2,16 @@
 
 import React, { useState } from 'react';
 import { useApi } from '@/context/ApiContext';
+import { IconBook, IconTerminal, IconPython, IconTypeScript, IconClipboard, IconCheckCircle, IconArrowDownTray } from '@/components/Icons';
 
 type QuickstartTab = 'readme' | 'curl' | 'python' | 'typescript';
+
+const TAB_ICONS: Record<QuickstartTab, React.ReactNode> = {
+    readme: <IconBook size={14} />,
+    curl: <IconTerminal size={14} />,
+    python: <IconPython size={14} />,
+    typescript: <IconTypeScript size={14} />,
+};
 
 export default function QuickstartViewer() {
     const { artifacts } = useApi();
@@ -12,11 +20,11 @@ export default function QuickstartViewer() {
 
     if (!artifacts) return null;
 
-    const tabs: { key: QuickstartTab; label: string; icon: string }[] = [
-        { key: 'readme', label: 'README', icon: '📖' },
-        { key: 'curl', label: 'curl', icon: '🔗' },
-        { key: 'python', label: 'Python', icon: '🐍' },
-        { key: 'typescript', label: 'TypeScript', icon: '📘' },
+    const tabs: { key: QuickstartTab; label: string }[] = [
+        { key: 'readme', label: 'README' },
+        { key: 'curl', label: 'curl' },
+        { key: 'python', label: 'Python' },
+        { key: 'typescript', label: 'TypeScript' },
     ];
 
     const content: Record<QuickstartTab, string> = {
@@ -58,16 +66,16 @@ export default function QuickstartViewer() {
                             className={`quickstart-tab ${activeTab === tab.key ? 'active' : ''}`}
                             onClick={() => setActiveTab(tab.key)}
                         >
-                            <span>{tab.icon}</span> {tab.label}
+                            {TAB_ICONS[tab.key]} {tab.label}
                         </button>
                     ))}
                 </div>
                 <div className="quickstart-actions">
                     <button className="action-button" onClick={handleCopy}>
-                        {copied ? '✅ Copied' : '📋 Copy'}
+                        {copied ? <><IconCheckCircle size={13} /> Copied</> : <><IconClipboard size={13} /> Copy</>}
                     </button>
                     <button className="action-button" onClick={handleDownload}>
-                        ⬇️ Download
+                        <IconArrowDownTray size={13} /> Download
                     </button>
                 </div>
             </div>

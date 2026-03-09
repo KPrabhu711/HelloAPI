@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '@/context/ApiContext';
 import { generateSnippets } from '@/lib/generators/curl-generator';
+import { IconTerminal, IconPython, IconTypeScript, IconCheckCircle, IconClipboard } from '@/components/Icons';
 
 interface Props {
     paramValues: Record<string, string>;
@@ -11,14 +12,14 @@ interface Props {
 type SnippetTab = 'curl' | 'python' | 'typescript';
 
 export default function SnippetGenerator({ paramValues }: Props) {
-    const { spec, selectedEndpoint } = useApi();
+    const { spec, selectedEndpoint, authToken } = useApi();
     const [activeTab, setActiveTab] = useState<SnippetTab>('curl');
     const [copied, setCopied] = useState(false);
 
     const snippets = useMemo(() => {
         if (!spec || !selectedEndpoint) return null;
-        return generateSnippets(spec, selectedEndpoint, paramValues);
-    }, [spec, selectedEndpoint, paramValues]);
+        return generateSnippets(spec, selectedEndpoint, paramValues, authToken || undefined);
+    }, [spec, selectedEndpoint, paramValues, authToken]);
 
     if (!snippets) return null;
 
@@ -39,13 +40,13 @@ export default function SnippetGenerator({ paramValues }: Props) {
                         className={`snippet-tab ${activeTab === tab ? 'active' : ''}`}
                         onClick={() => setActiveTab(tab)}
                     >
-                        {tab === 'curl' ? '🔗 curl' : tab === 'python' ? '🐍 Python' : '📘 TypeScript'}
+                        {tab === 'curl' ? (<><IconTerminal size={14} />curl</>) : tab === 'python' ? (<><IconPython size={14} />Python</>) : (<><IconTypeScript size={14} />TypeScript</>)}
                     </button>
                 ))}
             </div>
             <div className="snippet-content">
                 <button className="copy-button" onClick={handleCopy}>
-                    {copied ? '✅ Copied!' : '📋 Copy'}
+                    {copied ? <><IconCheckCircle size={13} /> Copied!</> : <><IconClipboard size={13} /> Copy</>}
                 </button>
                 <pre className="snippet-code"><code>{code}</code></pre>
             </div>

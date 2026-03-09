@@ -3,6 +3,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useApi } from '@/context/ApiContext';
 import Dashboard from '@/components/Dashboard';
+import ApiSearch from '@/components/ApiSearch';
+import {
+    IconSearch, IconDocument, IconUpload,
+    IconLightning, LogoMark,
+    IconXCircle, IconPlay, IconRocket, IconBook, IconWarn,
+    IconSun, IconMoon,
+} from '@/components/Icons';
 
 const SAMPLE_SPEC = `{
   "openapi": "3.0.0",
@@ -204,6 +211,7 @@ const SAMPLE_SPEC = `{
 
 export default function HomePage() {
     const { spec, isLoading, error, parseAndGenerate } = useApi();
+    const [inputMode, setInputMode] = useState<'paste' | 'search'>('search');
     const [inputText, setInputText] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -234,6 +242,8 @@ export default function HomePage() {
         setInputText(SAMPLE_SPEC);
     };
 
+    const { theme, toggleTheme } = useApi();
+
     // Show dashboard if spec is loaded
     if (spec) {
         return <Dashboard />;
@@ -241,11 +251,28 @@ export default function HomePage() {
 
     return (
         <div className="landing-page">
+            {/* Navbar */}
+            <nav className="landing-nav">
+                <div className="landing-nav-logo">
+                    <LogoMark size={32} />
+                    <span className="landing-nav-wordmark">
+                        <span className="landing-nav-hello">Hello</span><span className="landing-nav-api">API</span>
+                    </span>
+                </div>
+                <button
+                    className="landing-theme-toggle"
+                    onClick={toggleTheme}
+                    title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                >
+                    {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+                </button>
+            </nav>
+
             {/* Hero */}
             <div className="hero">
                 <div className="hero-glow" />
                 <div className="hero-content">
-                    <div className="hero-badge">⚡ Interactive API Learning Platform</div>
+                    <div className="hero-badge"><LogoMark size={18} /> Interactive API Learning Platform</div>
                     <h1 className="hero-title">
                         Turn API docs into
                         <br />
@@ -260,91 +287,115 @@ export default function HomePage() {
 
             {/* Upload Section */}
             <div className="upload-section">
-                <div
-                    className={`upload-zone ${isDragging ? 'dragging' : ''}`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".json,.yaml,.yml,.txt,.md"
-                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-                        className="hidden-input"
-                    />
-                    <div className="upload-icon">📁</div>
-                    <p className="upload-text">
-                        <strong>Drop your OpenAPI spec here</strong> or click to browse
-                    </p>
-                    <p className="upload-hint">Supports JSON, YAML, or text documentation</p>
-                </div>
-
-                <div className="divider">
-                    <span>or paste below</span>
-                </div>
-
-                <textarea
-                    className="input-textarea"
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder={'Paste your OpenAPI/Swagger spec (JSON or YAML) or API documentation text here...\n\nExample:\n{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0" },\n  "paths": { ... }\n}'}
-                    rows={12}
-                />
-
-                <div className="action-row">
+                {/* Mode Toggle */}
+                <div className="input-mode-toggle">
                     <button
-                        className="sample-button"
-                        onClick={handleLoadSample}
+                        className={`input-mode-btn ${inputMode === 'search' ? 'active' : ''}`}
+                        onClick={() => setInputMode('search')}
                     >
-                        📋 Load Sample (Pet Store API)
+                        <IconSearch size={14} /> Search APIs
                     </button>
                     <button
-                        className="generate-button"
-                        onClick={handleSubmit}
-                        disabled={!inputText.trim() || isLoading}
+                        className={`input-mode-btn ${inputMode === 'paste' ? 'active' : ''}`}
+                        onClick={() => setInputMode('paste')}
                     >
-                        {isLoading ? (
-                            <>
-                                <span className="spinner" />
-                                Processing...
-                            </>
-                        ) : (
-                            <>
-                                <span>⚡</span>
-                                Generate Playground
-                            </>
+                        <IconDocument size={14} /> Paste / Upload
+                    </button>
+                </div>
+
+                {/* Search Mode */}
+                {inputMode === 'search' && <ApiSearch />}
+
+                {/* Paste / Upload Mode */}
+                {inputMode === 'paste' && (
+                    <>
+                        <div
+                            className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".json,.yaml,.yml,.txt,.md"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                                className="hidden-input"
+                            />
+                            <div className="upload-icon"><IconUpload size={36} /></div>
+                            <p className="upload-text">
+                                <strong>Drop your OpenAPI spec here</strong> or click to browse
+                            </p>
+                            <p className="upload-hint">Supports JSON, YAML, or text documentation</p>
+                        </div>
+
+                        <div className="divider">
+                            <span>or paste below</span>
+                        </div>
+
+                        <textarea
+                            className="input-textarea"
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            placeholder={'Paste your OpenAPI/Swagger spec (JSON or YAML) or API documentation text here...\n\nExample:\n{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0" },\n  "paths": { ... }\n}'}
+                            rows={12}
+                        />
+
+                        <div className="action-row">
+                            <button
+                                className="sample-button"
+                                onClick={handleLoadSample}
+                            >
+                                <IconDocument size={14} /> Load Sample (Pet Store API)
+                            </button>
+                            <button
+                                className="generate-button"
+                                onClick={handleSubmit}
+                                disabled={!inputText.trim() || isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <span className="spinner" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <IconLightning size={15} />
+                                        Generate Playground
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {error && (
+                            <div className="error-banner">
+                                <IconXCircle size={15} /> {error}
+                            </div>
                         )}
-                    </button>
-                </div>
-
-                {error && (
-                    <div className="error-banner">
-                        <span>❌</span> {error}
-                    </div>
+                    </>
                 )}
             </div>
 
             {/* Features */}
             <div className="features">
                 <div className="feature-card">
-                    <span className="feature-icon">🔌</span>
+                    <span className="feature-icon"><IconPlay size={22} /></span>
                     <h3>Interactive Playground</h3>
                     <p>Explore every endpoint with auto-generated forms, Try It execution, and formatted responses.</p>
                 </div>
                 <div className="feature-card">
-                    <span className="feature-icon">🚀</span>
+                    <span className="feature-icon"><IconRocket size={22} /></span>
                     <h3>Quickstart Pack</h3>
                     <p>Get a README with auth setup, curl examples, and starter code in Python & TypeScript.</p>
                 </div>
                 <div className="feature-card">
-                    <span className="feature-icon">📚</span>
+                    <span className="feature-icon"><IconBook size={22} /></span>
                     <h3>Guided Learning</h3>
                     <p>Follow structured paths: Basics → CRUD → Workflows. Learn the API step by step.</p>
                 </div>
                 <div className="feature-card">
-                    <span className="feature-icon">⚠️</span>
+                    <span className="feature-icon"><IconWarn size={22} /></span>
                     <h3>Error Intelligence</h3>
                     <p>Every endpoint comes with common errors, likely causes, and fix suggestions.</p>
                 </div>
@@ -352,7 +403,7 @@ export default function HomePage() {
 
             {/* Footer */}
             <footer className="landing-footer">
-                <p>Built with ⚡ by HelloAPI — Powered by Amazon Bedrock</p>
+                <p>Built with <LogoMark size={14} className="footer-icon" /> by HelloAPI — Powered by Groq AI</p>
             </footer>
         </div>
     );

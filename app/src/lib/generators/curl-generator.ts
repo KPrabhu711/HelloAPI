@@ -15,7 +15,7 @@ export function generateCurlExamples(spec: ApiSpec): string {
     return lines.join('\n');
 }
 
-export function buildCurl(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>): string {
+export function buildCurl(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>, authToken?: string): string {
     let path = ep.path;
     for (const p of ep.parameters.filter(p => p.in === 'path')) {
         const val = paramValues?.[p.name] || p.example || p.default || `{${p.name}}`;
@@ -37,7 +37,7 @@ export function buildCurl(spec: ApiSpec, ep: Endpoint, paramValues?: Record<stri
     curl += ` "${spec.baseUrl}${path}${queryString}"`;
 
     // Auth headers
-    curl += buildAuthHeaderCurl(spec);
+    curl += buildAuthHeaderCurl(spec, authToken);
 
     // Content-Type for body
     if (ep.requestBody) {
@@ -49,11 +49,15 @@ export function buildCurl(spec: ApiSpec, ep: Endpoint, paramValues?: Record<stri
     return curl;
 }
 
-function buildAuthHeaderCurl(spec: ApiSpec): string {
+function buildAuthHeaderCurl(spec: ApiSpec, token?: string): string {
     const a = spec.auth;
-    if (a.type === 'bearer') return ` \\\n  -H "Authorization: Bearer $API_TOKEN"`;
-    if (a.type === 'apiKey' && a.headerName) return ` \\\n  -H "${a.headerName}: $API_KEY"`;
-    if (a.type === 'basic') return ` \\\n  -u "$API_USERNAME:$API_PASSWORD"`;
+    const tok = token || '$API_TOKEN';
+    const key = token || '$API_KEY';
+    if (a.type === 'bearer')  return ` \\\n  -H "Authorization: Bearer ${tok}"`;
+    if (a.type === 'oauth2')  return ` \\\n  -H "Authorization: Bearer ${tok}"`;
+    if (a.type === 'apiKey' && a.headerName) return ` \\\n  -H "${a.headerName}: ${key}"`;
+    if (a.type === 'apiKey' && a.queryParamName) return ''; // handled in query string
+    if (a.type === 'basic') return ` \\\n  -u "${token ? token : '$API_USERNAME:$API_PASSWORD'}"` ;
     return '';
 }
 
@@ -79,11 +83,16 @@ function getPlaceholder(type: string): unknown {
 
 // ─── Snippet Generator (per-endpoint) ───
 
-export function generateSnippets(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>): GeneratedSnippet {
+export function generateSnippets(
+    spec: ApiSpec,
+    ep: Endpoint,
+    paramValues?: Record<string, string>,
+    authToken?: string,
+): GeneratedSnippet {
     return {
-        curl: buildCurl(spec, ep, paramValues),
-        python: buildPython(spec, ep, paramValues),
-        typescript: buildTypeScript(spec, ep, paramValues),
+        curl: buildCurl(spec, ep, paramValues, authToken),
+        python: buildPython(spec, ep, paramValues, authToken),
+        typescript: buildTypeScript(spec, ep, paramValues, authToken),
     };
 }
 
@@ -96,7 +105,7 @@ function resolvedPath(ep: Endpoint, paramValues?: Record<string, string>): strin
     return path;
 }
 
-function buildPython(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>): string {
+function buildPython(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>, authToken?: string): string {
     const path = resolvedPath(ep, paramValues);
     const lines: string[] = [];
     lines.push('import requests');
@@ -104,9 +113,11 @@ function buildPython(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, s
     lines.push(`url = "${spec.baseUrl}${path}"`);
 
     // Headers
+    const tok = authToken || 'YOUR_TOKEN';
+    const key = authToken || 'YOUR_API_KEY';
     lines.push('headers = {');
-    if (spec.auth.type === 'bearer') lines.push('    "Authorization": "Bearer YOUR_TOKEN",');
-    else if (spec.auth.type === 'apiKey' && spec.auth.headerName) lines.push(`    "${spec.auth.headerName}": "YOUR_API_KEY",`);
+    if (spec.auth.type === 'bearer' || spec.auth.type === 'oauth2') lines.push(`    "Authorization": "Bearer ${tok}",`);
+    else if (spec.auth.type === 'apiKey' && spec.auth.headerName) lines.push(`    "${spec.auth.headerName}": "${key}",`);
     if (ep.requestBody) lines.push('    "Content-Type": "application/json",');
     lines.push('}');
 
@@ -141,16 +152,18 @@ function buildPython(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, s
     return lines.join('\n');
 }
 
-function buildTypeScript(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>): string {
+function buildTypeScript(spec: ApiSpec, ep: Endpoint, paramValues?: Record<string, string>, authToken?: string): string {
     const path = resolvedPath(ep, paramValues);
     const lines: string[] = [];
     lines.push('const axios = require("axios");');
     lines.push('');
 
     // Headers
+    const tok = authToken || 'YOUR_TOKEN';
+    const key = authToken || 'YOUR_API_KEY';
     const headers: string[] = [];
-    if (spec.auth.type === 'bearer') headers.push('  "Authorization": "Bearer YOUR_TOKEN"');
-    else if (spec.auth.type === 'apiKey' && spec.auth.headerName) headers.push(`  "${spec.auth.headerName}": "YOUR_API_KEY"`);
+    if (spec.auth.type === 'bearer' || spec.auth.type === 'oauth2') headers.push(`  "Authorization": "Bearer ${tok}"`);
+    else if (spec.auth.type === 'apiKey' && spec.auth.headerName) headers.push(`  "${spec.auth.headerName}": "${key}"`);
     if (ep.requestBody) headers.push('  "Content-Type": "application/json"');
 
     // Query params

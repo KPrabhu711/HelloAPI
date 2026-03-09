@@ -3,6 +3,33 @@
 import React, { useState } from 'react';
 import { useApi } from '@/context/ApiContext';
 import { LearningPath, LearningStep } from '@/lib/types';
+import { IconBook, IconRocket, IconRefresh, IconPlay, IconPencil, IconInfo } from '@/components/Icons';
+
+const PATH_ICONS: Record<string, React.ReactNode> = {
+    rocket: <IconRocket size={22} />,
+    book: <IconBook size={22} />,
+    refresh: <IconRefresh size={22} />,
+    play: <IconPlay size={22} />,
+};
+
+function PathIcon({ name }: { name: string }) {
+    return <>{PATH_ICONS[name] ?? <IconBook size={22} />}</>;
+}
+
+/** Renders a string with **bold** and `code` inline markdown into React nodes. */
+function renderInlineMd(text: string): React.ReactNode[] {
+    // Split on **bold** and `code` patterns
+    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('`') && part.endsWith('`')) {
+            return <code key={i} className="inline-code">{part.slice(1, -1)}</code>;
+        }
+        return part;
+    });
+}
 
 export default function LearningPathView() {
     const { learningPaths, selectEndpoint, spec } = useApi();
@@ -13,7 +40,7 @@ export default function LearningPathView() {
         return (
             <div className="learning-paths empty">
                 <div className="empty-state">
-                    <span className="empty-icon">📚</span>
+                    <span className="empty-icon"><IconBook size={28} /></span>
                     <h3>No Learning Paths Available</h3>
                     <p>Learning paths are auto-generated from your API spec. Upload a spec with more endpoints to unlock guided learning.</p>
                 </div>
@@ -33,7 +60,7 @@ export default function LearningPathView() {
                             className="path-card"
                             onClick={() => { setActivePath(path); setActiveStep(0); }}
                         >
-                            <span className="path-icon">{path.icon}</span>
+                            <span className="path-icon"><PathIcon name={path.icon} /></span>
                             <h3 className="path-title">{path.title}</h3>
                             <p className="path-description">{path.description}</p>
                             <div className="path-meta">
@@ -62,7 +89,7 @@ export default function LearningPathView() {
                 <button className="back-button" onClick={() => setActivePath(null)}>
                     ← All Paths
                 </button>
-                <h2>{activePath.icon} {activePath.title}</h2>
+                <h2>{activePath.title}</h2>
                 <div className="progress-bar">
                     <div className="progress-fill" style={{ width: `${progress}%` }} />
                 </div>
@@ -70,11 +97,13 @@ export default function LearningPathView() {
             </div>
 
             <div className="step-content">
-                <div className="step-badge">{step.type === 'endpoint' ? '🔌' : step.type === 'exercise' ? '✏️' : 'ℹ️'}</div>
+                <div className="step-badge">
+                    {step.type === 'endpoint' ? <IconPlay size={14} /> : step.type === 'exercise' ? <IconPencil size={14} /> : <IconInfo size={14} />}
+                </div>
                 <h3 className="step-title">{step.title}</h3>
                 <p className="step-description">{step.description}</p>
                 <div className="step-body">
-                    <p>{step.content}</p>
+                    <p>{renderInlineMd(step.content)}</p>
                 </div>
                 {step.endpointId && (
                     <button

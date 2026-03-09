@@ -67,7 +67,7 @@ function buildBasicsPath(spec: ApiSpec): LearningPath {
         id: 'basics',
         title: 'Getting Started',
         description: 'Learn the fundamentals: authentication, first request, pagination, and error handling.',
-        icon: '🚀',
+        icon: 'rocket',
         steps,
     };
 }
@@ -163,7 +163,7 @@ function buildCrudPath(spec: ApiSpec): LearningPath | null {
         id: 'crud',
         title: `CRUD Operations — ${capitalize(bestResource)}`,
         description: `Learn the full Create, Read, Update, Delete cycle for ${bestResource}.`,
-        icon: '📝',
+        icon: 'book',
         steps,
     };
 }
@@ -192,7 +192,7 @@ function buildWorkflowPath(spec: ApiSpec): LearningPath | null {
         id: 'workflow',
         title: 'Business Workflow',
         description: 'Follow a real-world workflow using multiple endpoints.',
-        icon: '🔄',
+        icon: 'refresh',
         steps,
     };
 }

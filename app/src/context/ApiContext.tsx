@@ -4,22 +4,30 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import { ApiSpec, Endpoint, ArtifactSet, LearningPath, ParseResult } from '@/lib/types';
 import { generateLearningPaths } from '@/lib/learning-paths';
 
+export type AiProvider = 'groq';
+export type Theme = 'dark' | 'light';
+
 interface ApiContextType {
     // State
     spec: ApiSpec | null;
     artifacts: ArtifactSet | null;
     learningPaths: LearningPath[];
     selectedEndpoint: Endpoint | null;
-    selectedTab: 'playground' | 'quickstart' | 'learn';
+    selectedTab: 'overview' | 'playground' | 'quickstart' | 'learn';
     isLoading: boolean;
     error: string | null;
     warnings: string[];
     todos: string[];
+    aiProvider: AiProvider;
+    authToken: string;
+    theme: Theme;
 
     // Actions
     parseAndGenerate: (content: string) => Promise<void>;
     selectEndpoint: (endpoint: Endpoint | null) => void;
-    setSelectedTab: (tab: 'playground' | 'quickstart' | 'learn') => void;
+    setSelectedTab: (tab: 'overview' | 'playground' | 'quickstart' | 'learn') => void;
+    setAuthToken: (token: string) => void;
+    toggleTheme: () => void;
     reset: () => void;
 }
 
@@ -30,11 +38,34 @@ export function ApiProvider({ children }: { children: ReactNode }) {
     const [artifacts, setArtifacts] = useState<ArtifactSet | null>(null);
     const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
     const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint | null>(null);
-    const [selectedTab, setSelectedTab] = useState<'playground' | 'quickstart' | 'learn'>('playground');
+    const [selectedTab, setSelectedTab] = useState<'overview' | 'playground' | 'quickstart' | 'learn'>('overview');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [warnings, setWarnings] = useState<string[]>([]);
     const [todos, setTodos] = useState<string[]>([]);
+    const aiProvider: AiProvider = 'groq';
+    const [authToken, setAuthToken] = useState<string>('');
+    const [theme, setTheme] = useState<Theme>('dark');
+
+    // Sync theme to DOM + localStorage
+    React.useEffect(() => {
+        try {
+            const saved = localStorage.getItem('helloapi-theme') as Theme | null;
+            if (saved === 'light' || saved === 'dark') {
+                setTheme(saved);
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        } catch {}
+    }, []);
+
+    const toggleTheme = useCallback(() => {
+        setTheme(prev => {
+            const next: Theme = prev === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('helloapi-theme', next); } catch {}
+            return next;
+        });
+    }, []);
 
     const parseAndGenerate = useCallback(async (content: string) => {
         setIsLoading(true);
@@ -100,19 +131,20 @@ export function ApiProvider({ children }: { children: ReactNode }) {
         setArtifacts(null);
         setLearningPaths([]);
         setSelectedEndpoint(null);
-        setSelectedTab('playground');
+        setSelectedTab('overview');
         setIsLoading(false);
         setError(null);
         setWarnings([]);
         setTodos([]);
+        setAuthToken('');
     }, []);
 
     return (
         <ApiContext.Provider
             value={{
                 spec, artifacts, learningPaths, selectedEndpoint, selectedTab,
-                isLoading, error, warnings, todos,
-                parseAndGenerate, selectEndpoint, setSelectedTab, reset,
+                isLoading, error, warnings, todos, aiProvider, authToken, theme,
+                parseAndGenerate, selectEndpoint, setSelectedTab, setAuthToken, toggleTheme, reset,
             }}
         >
             {children}

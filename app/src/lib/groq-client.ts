@@ -1,37 +1,39 @@
-// ─── Google Gemini AI Client for HelloAPI ───
+// ─── Groq AI Client for HelloAPI ───
 // Provides AI-powered endpoint explanations and error troubleshooting
-// using Google Gemini (free tier).
+// using Groq's fast inference API.
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { Endpoint, ApiSpec } from './types';
 
 // ─── Configuration ───
-const API_KEY = process.env.GEMINI_API_KEY || '';
-const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+const API_KEY = process.env.GROQ_API_KEY || '';
+const MODEL_NAME = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-let genAI: GoogleGenerativeAI | null = null;
+let groqClient: Groq | null = null;
 
-function getClient(): GoogleGenerativeAI {
+function getClient(): Groq {
     if (!API_KEY) {
-        throw new Error('GEMINI_API_KEY environment variable is not set. Get a free key at https://aistudio.google.com/apikey');
+        throw new Error('GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com/keys');
     }
-    if (!genAI) {
-        genAI = new GoogleGenerativeAI(API_KEY);
+    if (!groqClient) {
+        groqClient = new Groq({ apiKey: API_KEY });
     }
-    return genAI;
+    return groqClient;
 }
 
-// ─── Helper: Invoke Gemini ───
+// ─── Helper: Invoke Groq ───
 async function invokeModel(prompt: string): Promise<string> {
     const client = getClient();
-    const model = client.getGenerativeModel({ model: MODEL_NAME });
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const completion = await client.chat.completions.create({
+        model: MODEL_NAME,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1024,
+    });
 
+    const text = completion.choices[0]?.message?.content;
     if (!text) {
-        throw new Error('Empty response from Gemini model');
+        throw new Error('Empty response from Groq model');
     }
 
     return text;
