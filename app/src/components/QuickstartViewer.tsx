@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApi } from '@/context/ApiContext';
+import { FileTextIcon, TerminalIcon, CodeIcon, CheckIcon, ClipboardIcon, DownloadIcon } from '@/components/Icons';
 
 type QuickstartTab = 'readme' | 'curl' | 'python' | 'typescript';
 
@@ -12,11 +13,11 @@ export default function QuickstartViewer() {
 
     if (!artifacts) return null;
 
-    const tabs: { key: QuickstartTab; label: string; icon: string }[] = [
-        { key: 'readme', label: 'README', icon: '📖' },
-        { key: 'curl', label: 'curl', icon: '🔗' },
-        { key: 'python', label: 'Python', icon: '🐍' },
-        { key: 'typescript', label: 'TypeScript', icon: '📘' },
+    const tabs: { key: QuickstartTab; label: string; icon: React.ReactNode }[] = [
+        { key: 'readme', label: 'README', icon: <FileTextIcon size={14} /> },
+        { key: 'curl', label: 'curl', icon: <TerminalIcon size={14} /> },
+        { key: 'python', label: 'Python', icon: <CodeIcon size={14} /> },
+        { key: 'typescript', label: 'TypeScript', icon: <CodeIcon size={14} /> },
     ];
 
     const content: Record<QuickstartTab, string> = {
@@ -58,16 +59,16 @@ export default function QuickstartViewer() {
                             className={`quickstart-tab ${activeTab === tab.key ? 'active' : ''}`}
                             onClick={() => setActiveTab(tab.key)}
                         >
-                            <span>{tab.icon}</span> {tab.label}
+                            {tab.icon} {tab.label}
                         </button>
                     ))}
                 </div>
                 <div className="quickstart-actions">
                     <button className="action-button" onClick={handleCopy}>
-                        {copied ? '✅ Copied' : '📋 Copy'}
+                        {copied ? <><CheckIcon size={13} /> Copied</> : <><ClipboardIcon size={13} /> Copy</>}
                     </button>
                     <button className="action-button" onClick={handleDownload}>
-                        ⬇️ Download
+                        <DownloadIcon size={13} /> Download
                     </button>
                 </div>
             </div>

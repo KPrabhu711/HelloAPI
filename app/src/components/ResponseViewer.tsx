@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { SendIcon } from '@/components/Icons';
 
 interface Props {
     response: {
@@ -17,7 +18,7 @@ export default function ResponseViewer({ response }: Props) {
         return (
             <div className="response-viewer empty">
                 <div className="response-placeholder">
-                    <span className="placeholder-icon">📡</span>
+                    <span className="placeholder-icon"><SendIcon size={24} /></span>
                     <p>Response will appear here after you run the request.</p>
                     <p className="placeholder-hint">Fill in the parameters above and click <strong>Try It</strong></p>
                 </div>

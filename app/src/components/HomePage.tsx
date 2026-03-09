@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useApi } from '@/context/ApiContext';
 import Dashboard from '@/components/Dashboard';
+import { BoltIcon, FolderIcon, ClipboardIcon, PlugIcon, RocketIcon, BookOpenIcon, AlertTriangleIcon, XCircleIcon } from '@/components/Icons';
 
 const SAMPLE_SPEC = `{
   "openapi": "3.0.0",
@@ -203,157 +204,157 @@ const SAMPLE_SPEC = `{
 }`;
 
 export default function HomePage() {
-    const { spec, isLoading, error, parseAndGenerate } = useApi();
-    const [inputText, setInputText] = useState('');
-    const [isDragging, setIsDragging] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const { spec, isLoading, error, parseAndGenerate } = useApi();
+  const [inputText, setInputText] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleSubmit = () => {
-        if (inputText.trim()) {
-            parseAndGenerate(inputText);
-        }
-    };
-
-    const handleFileUpload = useCallback((file: File) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const text = e.target?.result as string;
-            setInputText(text);
-        };
-        reader.readAsText(file);
-    }, []);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file) handleFileUpload(file);
-    }, [handleFileUpload]);
-
-    const handleLoadSample = () => {
-        setInputText(SAMPLE_SPEC);
-    };
-
-    // Show dashboard if spec is loaded
-    if (spec) {
-        return <Dashboard />;
+  const handleSubmit = () => {
+    if (inputText.trim()) {
+      parseAndGenerate(inputText);
     }
+  };
 
-    return (
-        <div className="landing-page">
-            {/* Hero */}
-            <div className="hero">
-                <div className="hero-glow" />
-                <div className="hero-content">
-                    <div className="hero-badge">⚡ Interactive API Learning Platform</div>
-                    <h1 className="hero-title">
-                        Turn API docs into
-                        <br />
-                        <span className="gradient-text">live playgrounds</span>
-                    </h1>
-                    <p className="hero-subtitle">
-                        Drop in an OpenAPI spec or paste your docs. Get a working quickstart,
-                        starter code, and an interactive endpoint playground — in seconds.
-                    </p>
-                </div>
-            </div>
+  const handleFileUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      setInputText(text);
+    };
+    reader.readAsText(file);
+  }, []);
 
-            {/* Upload Section */}
-            <div className="upload-section">
-                <div
-                    className={`upload-zone ${isDragging ? 'dragging' : ''}`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".json,.yaml,.yml,.txt,.md"
-                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-                        className="hidden-input"
-                    />
-                    <div className="upload-icon">📁</div>
-                    <p className="upload-text">
-                        <strong>Drop your OpenAPI spec here</strong> or click to browse
-                    </p>
-                    <p className="upload-hint">Supports JSON, YAML, or text documentation</p>
-                </div>
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  }, [handleFileUpload]);
 
-                <div className="divider">
-                    <span>or paste below</span>
-                </div>
+  const handleLoadSample = () => {
+    setInputText(SAMPLE_SPEC);
+  };
 
-                <textarea
-                    className="input-textarea"
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder={'Paste your OpenAPI/Swagger spec (JSON or YAML) or API documentation text here...\n\nExample:\n{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0" },\n  "paths": { ... }\n}'}
-                    rows={12}
-                />
+  // Show dashboard if spec is loaded
+  if (spec) {
+    return <Dashboard />;
+  }
 
-                <div className="action-row">
-                    <button
-                        className="sample-button"
-                        onClick={handleLoadSample}
-                    >
-                        📋 Load Sample (Pet Store API)
-                    </button>
-                    <button
-                        className="generate-button"
-                        onClick={handleSubmit}
-                        disabled={!inputText.trim() || isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <span className="spinner" />
-                                Processing...
-                            </>
-                        ) : (
-                            <>
-                                <span>⚡</span>
-                                Generate Playground
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                {error && (
-                    <div className="error-banner">
-                        <span>❌</span> {error}
-                    </div>
-                )}
-            </div>
-
-            {/* Features */}
-            <div className="features">
-                <div className="feature-card">
-                    <span className="feature-icon">🔌</span>
-                    <h3>Interactive Playground</h3>
-                    <p>Explore every endpoint with auto-generated forms, Try It execution, and formatted responses.</p>
-                </div>
-                <div className="feature-card">
-                    <span className="feature-icon">🚀</span>
-                    <h3>Quickstart Pack</h3>
-                    <p>Get a README with auth setup, curl examples, and starter code in Python & TypeScript.</p>
-                </div>
-                <div className="feature-card">
-                    <span className="feature-icon">📚</span>
-                    <h3>Guided Learning</h3>
-                    <p>Follow structured paths: Basics → CRUD → Workflows. Learn the API step by step.</p>
-                </div>
-                <div className="feature-card">
-                    <span className="feature-icon">⚠️</span>
-                    <h3>Error Intelligence</h3>
-                    <p>Every endpoint comes with common errors, likely causes, and fix suggestions.</p>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <footer className="landing-footer">
-                <p>Built with ⚡ by HelloAPI — Powered by Amazon Bedrock</p>
-            </footer>
+  return (
+    <div className="landing-page">
+      {/* Hero */}
+      <div className="hero">
+        <div className="hero-glow" />
+        <div className="hero-content">
+          <div className="hero-badge"><BoltIcon size={14} /> Interactive API Learning Platform</div>
+          <h1 className="hero-title">
+            Turn API docs into
+            <br />
+            <span className="gradient-text">live playgrounds</span>
+          </h1>
+          <p className="hero-subtitle">
+            Drop in an OpenAPI spec or paste your docs. Get a working quickstart,
+            starter code, and an interactive endpoint playground — in seconds.
+          </p>
         </div>
-    );
+      </div>
+
+      {/* Upload Section */}
+      <div className="upload-section">
+        <div
+          className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.yaml,.yml,.txt,.md"
+            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+            className="hidden-input"
+          />
+          <div className="upload-icon"><FolderIcon size={28} /></div>
+          <p className="upload-text">
+            <strong>Drop your OpenAPI spec here</strong> or click to browse
+          </p>
+          <p className="upload-hint">Supports JSON, YAML, or text documentation</p>
+        </div>
+
+        <div className="divider">
+          <span>or paste below</span>
+        </div>
+
+        <textarea
+          className="input-textarea"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder={'Paste your OpenAPI/Swagger spec (JSON or YAML) or API documentation text here...\n\nExample:\n{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0" },\n  "paths": { ... }\n}'}
+          rows={12}
+        />
+
+        <div className="action-row">
+          <button
+            className="sample-button"
+            onClick={handleLoadSample}
+          >
+            <ClipboardIcon size={14} /> Load Sample (Pet Store API)
+          </button>
+          <button
+            className="generate-button"
+            onClick={handleSubmit}
+            disabled={!inputText.trim() || isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="spinner" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <BoltIcon size={16} />
+                Generate Playground
+              </>
+            )}
+          </button>
+        </div>
+
+        {error && (
+          <div className="error-banner">
+            <XCircleIcon size={16} /> {error}
+          </div>
+        )}
+      </div>
+
+      {/* Features */}
+      <div className="features">
+        <div className="feature-card">
+          <span className="feature-icon"><PlugIcon size={22} /></span>
+          <h3>Interactive Playground</h3>
+          <p>Explore every endpoint with auto-generated forms, Try It execution, and formatted responses.</p>
+        </div>
+        <div className="feature-card">
+          <span className="feature-icon"><RocketIcon size={22} /></span>
+          <h3>Quickstart Pack</h3>
+          <p>Get a README with auth setup, curl examples, and starter code in Python & TypeScript.</p>
+        </div>
+        <div className="feature-card">
+          <span className="feature-icon"><BookOpenIcon size={22} /></span>
+          <h3>Guided Learning</h3>
+          <p>Follow structured paths: Basics → CRUD → Workflows. Learn the API step by step.</p>
+        </div>
+        <div className="feature-card">
+          <span className="feature-icon"><AlertTriangleIcon size={22} /></span>
+          <h3>Error Intelligence</h3>
+          <p>Every endpoint comes with common errors, likely causes, and fix suggestions.</p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="landing-footer">
+        <p>Built by HelloAPI — Powered by Groq</p>
+      </footer>
+    </div>
+  );
 }

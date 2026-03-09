@@ -11,43 +11,43 @@ export function generateReadme(spec: ApiSpec): string {
     }
 
     // Auth
-    sections.push(`## 🔐 Authentication\n`);
+    sections.push(`## Authentication\n`);
     sections.push(renderAuth(spec));
 
     // Env
-    sections.push(`## ⚙️ Environment Variables\n`);
+    sections.push(`## Environment Variables\n`);
     sections.push(renderEnvVars(spec));
 
     // Install
-    sections.push(`## 📦 Installation\n`);
+    sections.push(`## Installation\n`);
     sections.push(renderInstall());
 
     // First Request
-    sections.push(`## 🚀 First Request\n`);
+    sections.push(`## First Request\n`);
     sections.push(renderFirstRequest(spec));
 
     // Pagination
     if (spec.paginationHints.length > 0) {
-        sections.push(`## 📄 Pagination\n`);
+        sections.push(`## Pagination\n`);
         sections.push(renderPagination(spec));
     }
 
     // Errors
-    sections.push(`## ❌ Error Handling\n`);
+    sections.push(`## Error Handling\n`);
     sections.push(renderErrors(spec));
 
     // Rate Limits
     if (spec.rateLimitHints.length > 0) {
-        sections.push(`## ⏱️ Rate Limiting\n`);
+        sections.push(`## Rate Limiting\n`);
         sections.push(renderRateLimits(spec));
     }
 
     // Endpoints Summary
-    sections.push(`## 📋 Endpoints Summary\n`);
+    sections.push(`## Endpoints Summary\n`);
     sections.push(renderEndpointSummary(spec));
 
     // Troubleshooting
-    sections.push(`## 🔧 Troubleshooting\n`);
+    sections.push(`## Troubleshooting\n`);
     sections.push(renderTroubleshooting());
 
     return sections.join('\n');

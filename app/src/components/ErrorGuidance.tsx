@@ -4,6 +4,8 @@ import React, { useState, useCallback } from 'react';
 import { useApi } from '@/context/ApiContext';
 import { getErrorGuidance } from '@/lib/generators/error-guidance';
 import { AiResponse } from '@/lib/types';
+import { CpuIcon, AlertTriangleIcon } from '@/components/Icons';
+import { marked } from 'marked';
 
 interface ApiResponse {
     status: number;
@@ -85,7 +87,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
                             {aiLoading ? (
                                 <><span className="spinner" /> Analyzing...</>
                             ) : (
-                                <>🤖 AI Troubleshoot</>
+                                <><CpuIcon size={14} /> AI Troubleshoot</>
                             )}
                         </button>
                     </div>
@@ -105,7 +107,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
                     {aiError && (
                         <div className="ai-panel ai-troubleshoot-panel">
                             <div className="ai-panel-body">
-                                <div className="ai-error"><span>⚠️</span> {aiError}</div>
+                                <div className="ai-error"><AlertTriangleIcon size={14} /> {aiError}</div>
                             </div>
                         </div>
                     )}
@@ -113,11 +115,11 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
                     {aiTroubleshoot && (
                         <div className="ai-panel ai-troubleshoot-panel">
                             <div className="ai-panel-header">
-                                <span className="ai-panel-icon">🤖</span>
+                                <span className="ai-panel-icon"><CpuIcon size={16} /></span>
                                 <span className="ai-panel-title">AI Troubleshooting</span>
                             </div>
                             <div className="ai-panel-body">
-                                <div className="ai-content" dangerouslySetInnerHTML={{ __html: formatAiMarkdown(aiTroubleshoot) }} />
+                                <div className="ai-content" dangerouslySetInnerHTML={{ __html: marked.parse(aiTroubleshoot) as string }} />
                             </div>
                         </div>
                     )}
@@ -126,7 +128,7 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
 
             {/* Static Error Guidance */}
             <h4 className="error-guidance-title">
-                <span>⚠️</span> Common Errors & Fixes
+                <AlertTriangleIcon size={16} /> Common Errors & Fixes
             </h4>
             <div className="error-list">
                 {errors.map((err) => (
@@ -153,16 +155,3 @@ export default function ErrorGuidance({ response }: ErrorGuidanceProps) {
     );
 }
 
-// Simple markdown-to-HTML converter for AI responses
-function formatAiMarkdown(text: string): string {
-    return text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code>$1</code>')
-        .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^# (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-        .replace(/\n/g, '<br/>');
-}

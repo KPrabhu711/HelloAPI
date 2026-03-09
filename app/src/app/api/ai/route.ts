@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { explainEndpoint, troubleshootError } from '@/lib/gemini-client';
+import { explainEndpoint, troubleshootError } from '@/lib/groq-client';
 import { Endpoint, ApiSpec } from '@/lib/types';
 
 interface AiRequestBody {
@@ -48,9 +48,9 @@ export async function POST(request: NextRequest) {
         const message = err instanceof Error ? err.message : 'AI request failed';
 
         // Check for missing API key
-        if (message.includes('GEMINI_API_KEY') || message.includes('API key')) {
+        if (message.includes('GROQ_API_KEY') || message.includes('API key')) {
             return NextResponse.json({
-                error: 'Gemini API key not configured. Set GEMINI_API_KEY environment variable. Get a free key at https://aistudio.google.com/apikey',
+                error: 'Groq API key not configured. Set GROQ_API_KEY environment variable. Get a free key at https://console.groq.com/keys',
                 hint: 'credentials',
             }, { status: 503 });
         }
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         // Check for quota / rate limit errors
         if (message.includes('429') || message.includes('quota') || message.includes('RATE_LIMIT')) {
             return NextResponse.json({
-                error: 'Gemini API rate limit reached. Please wait a moment and try again.',
+                error: 'Groq API rate limit reached. Please wait a moment and try again.',
                 hint: 'rate_limit',
             }, { status: 429 });
         }

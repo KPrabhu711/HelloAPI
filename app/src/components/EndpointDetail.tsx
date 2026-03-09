@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ParameterForm from './ParameterForm';
 import ResponseViewer from './ResponseViewer';
 import SnippetGenerator from './SnippetGenerator';
 import ErrorGuidance from './ErrorGuidance';
 import { useApi } from '@/context/ApiContext';
 import { AiResponse } from '@/lib/types';
+import { LockIcon, KeyIcon, SparklesIcon, CpuIcon, BoltIcon, CodeIcon, AlertTriangleIcon, XIcon, ArrowLeftIcon } from '@/components/Icons';
+import { marked } from 'marked';
 
 const METHOD_COLORS: Record<string, string> = {
     GET: '#10b981',
@@ -38,17 +40,28 @@ export default function EndpointDetail() {
     const [aiExplainError, setAiExplainError] = useState<string | null>(null);
     const [showAiExplain, setShowAiExplain] = useState(false);
 
+    // Reset AI state when endpoint changes
+    useEffect(() => {
+        setAiExplanation(null);
+        setAiExplainError(null);
+        setShowAiExplain(false);
+        setAiExplainLoading(false);
+    }, [selectedEndpoint?.id]);
+
     // AI Explain handler - must be before early return to maintain hook order
     const handleAiExplain = useCallback(async () => {
         if (!selectedEndpoint || !spec) return;
-        
-        if (aiExplanation) {
-            setShowAiExplain(!showAiExplain);
+
+        // Toggle off if already showing
+        if (showAiExplain && aiExplanation) {
+            setShowAiExplain(false);
             return;
         }
 
+        // Always fetch fresh for the current endpoint
         setAiExplainLoading(true);
         setAiExplainError(null);
+        setAiExplanation(null);
         setShowAiExplain(true);
 
         try {
@@ -70,7 +83,7 @@ export default function EndpointDetail() {
                 setAiExplanation(data.result || '');
             }
         } catch {
-            setAiExplainError('Failed to connect to AI service. Check your network and AWS credentials.');
+            setAiExplainError('Failed to connect to AI service. Check your network.');
         } finally {
             setAiExplainLoading(false);
         }
@@ -80,7 +93,7 @@ export default function EndpointDetail() {
         return (
             <div className="endpoint-detail empty">
                 <div className="empty-state">
-                    <span className="empty-icon">👈</span>
+                    <span className="empty-icon"><ArrowLeftIcon size={28} /></span>
                     <h3>Select an endpoint</h3>
                     <p>Choose an endpoint from the sidebar to explore its details, parameters, and try it out.</p>
                 </div>
@@ -226,7 +239,7 @@ export default function EndpointDetail() {
                         {ep.method}
                     </span>
                     <code className="endpoint-path-lg">{ep.path}</code>
-                    {ep.auth && <span className="auth-badge">🔒 Auth</span>}
+                    {ep.auth && <span className="auth-badge"><LockIcon size={12} /> Auth</span>}
                 </div>
                 <h2 className="endpoint-summary">{ep.summary || `${ep.method} ${ep.path}`}</h2>
                 {ep.description && ep.description !== ep.summary && (
@@ -240,7 +253,7 @@ export default function EndpointDetail() {
                     {aiExplainLoading ? (
                         <><span className="spinner" /> Thinking...</>
                     ) : (
-                        <>✨ AI Explain</>
+                        <><SparklesIcon size={14} /> AI Explain</>
                     )}
                 </button>
             </div>
@@ -249,9 +262,9 @@ export default function EndpointDetail() {
             {showAiExplain && (
                 <div className="ai-panel">
                     <div className="ai-panel-header">
-                        <span className="ai-panel-icon">🤖</span>
+                        <span className="ai-panel-icon"><CpuIcon size={16} /></span>
                         <span className="ai-panel-title">AI Explanation</span>
-                        <button className="ai-panel-close" onClick={() => setShowAiExplain(false)}>✕</button>
+                        <button className="ai-panel-close" onClick={() => setShowAiExplain(false)}><XIcon size={14} /></button>
                     </div>
                     <div className="ai-panel-body">
                         {aiExplainLoading && (
@@ -263,11 +276,11 @@ export default function EndpointDetail() {
                         )}
                         {aiExplainError && (
                             <div className="ai-error">
-                                <span>⚠️</span> {aiExplainError}
+                                <AlertTriangleIcon size={14} /> {aiExplainError}
                             </div>
                         )}
                         {aiExplanation && (
-                            <div className="ai-content" dangerouslySetInnerHTML={{ __html: formatAiMarkdown(aiExplanation) }} />
+                            <div className="ai-content" dangerouslySetInnerHTML={{ __html: marked.parse(aiExplanation) as string }} />
                         )}
                     </div>
                 </div>
@@ -277,7 +290,7 @@ export default function EndpointDetail() {
             {ep.auth && (
                 <div className="auth-input-section">
                     <label className="auth-input-label">
-                        <span className="auth-label-icon">🔑</span>
+                        <span className="auth-label-icon"><KeyIcon size={14} /></span>
                         <span className="auth-label-text">Authentication</span>
                         <span className="auth-label-type">{spec.auth.type}</span>
                     </label>
@@ -301,19 +314,19 @@ export default function EndpointDetail() {
                     className={`section-tab ${activeSection === 'params' ? 'active' : ''}`}
                     onClick={() => setActiveSection('params')}
                 >
-                    ⚡ Parameters
+                    <BoltIcon size={14} /> Parameters
                 </button>
                 <button
                     className={`section-tab ${activeSection === 'snippets' ? 'active' : ''}`}
                     onClick={() => setActiveSection('snippets')}
                 >
-                    💻 Code Snippets
+                    <CodeIcon size={14} /> Code Snippets
                 </button>
                 <button
                     className={`section-tab ${activeSection === 'errors' ? 'active' : ''}`}
                     onClick={() => setActiveSection('errors')}
                 >
-                    ⚠️ Errors
+                    <AlertTriangleIcon size={14} /> Errors
                 </button>
             </div>
 
@@ -359,16 +372,3 @@ export default function EndpointDetail() {
     );
 }
 
-// Simple markdown-to-HTML converter for AI responses
-function formatAiMarkdown(text: string): string {
-    return text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code>$1</code>')
-        .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^# (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-        .replace(/\n/g, '<br/>');
-}

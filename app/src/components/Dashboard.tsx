@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { useApi } from '@/context/ApiContext';
 import EndpointList from '@/components/EndpointList';
 import EndpointDetail from '@/components/EndpointDetail';
 import QuickstartViewer from '@/components/QuickstartViewer';
 import LearningPathView from '@/components/LearningPathView';
+import { BoltIcon, PlugIcon, RocketIcon, BookOpenIcon, AlertTriangleIcon, FileTextIcon } from '@/components/Icons';
 
 export default function Dashboard() {
     const { spec, selectedTab, setSelectedTab, warnings, todos, reset } = useApi();
@@ -18,7 +19,7 @@ export default function Dashboard() {
             <div className="dashboard-topbar">
                 <div className="topbar-left">
                     <button className="logo-button" onClick={reset}>
-                        <span className="logo-icon">⚡</span>
+                        <span className="logo-icon"><BoltIcon size={18} /></span>
                         <span className="logo-text">HelloAPI</span>
                     </button>
                     <div className="api-info">
@@ -32,19 +33,19 @@ export default function Dashboard() {
                         className={`topbar-tab ${selectedTab === 'playground' ? 'active' : ''}`}
                         onClick={() => setSelectedTab('playground')}
                     >
-                        🔌 Playground
+                        <PlugIcon size={14} /> Playground
                     </button>
                     <button
                         className={`topbar-tab ${selectedTab === 'quickstart' ? 'active' : ''}`}
                         onClick={() => setSelectedTab('quickstart')}
                     >
-                        🚀 Quickstart
+                        <RocketIcon size={14} /> Quickstart
                     </button>
                     <button
                         className={`topbar-tab ${selectedTab === 'learn' ? 'active' : ''}`}
                         onClick={() => setSelectedTab('learn')}
                     >
-                        📚 Learn
+                        <BookOpenIcon size={14} /> Learn
                     </button>
                 </div>
             </div>
@@ -53,10 +54,10 @@ export default function Dashboard() {
             {(warnings.length > 0 || todos.length > 0) && (
                 <div className="alerts-bar">
                     {warnings.map((w, i) => (
-                        <div key={`w-${i}`} className="alert warning">⚠️ {w}</div>
+                        <div key={`w-${i}`} className="alert warning"><AlertTriangleIcon size={14} /> {w}</div>
                     ))}
                     {todos.map((t, i) => (
-                        <div key={`t-${i}`} className="alert todo">📝 {t}</div>
+                        <div key={`t-${i}`} className="alert todo"><FileTextIcon size={14} /> {t}</div>
                     ))}
                 </div>
             )}

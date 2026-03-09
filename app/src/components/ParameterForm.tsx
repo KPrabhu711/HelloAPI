@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Endpoint, Parameter, SchemaField } from '@/lib/types';
+import { LinkIcon, SearchIcon, ClipboardIcon, PackageIcon, SparklesIcon } from '@/components/Icons';
 
 interface Props {
     endpoint: Endpoint;
@@ -25,7 +26,7 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
             {pathParams.length > 0 && (
                 <div className="param-section">
                     <h4 className="param-section-title">
-                        <span className="param-icon">🔗</span> Path Parameters
+                        <span className="param-icon"><LinkIcon size={14} /></span> Path Parameters
                     </h4>
                     {pathParams.map(p => renderParamInput(p, values, handleChange))}
                 </div>
@@ -34,7 +35,7 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
             {queryParams.length > 0 && (
                 <div className="param-section">
                     <h4 className="param-section-title">
-                        <span className="param-icon">🔍</span> Query Parameters
+                        <span className="param-icon"><SearchIcon size={14} /></span> Query Parameters
                     </h4>
                     {queryParams.map(p => renderParamInput(p, values, handleChange))}
                 </div>
@@ -43,7 +44,7 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
             {headerParams.length > 0 && (
                 <div className="param-section">
                     <h4 className="param-section-title">
-                        <span className="param-icon">📋</span> Headers
+                        <span className="param-icon"><ClipboardIcon size={14} /></span> Headers
                     </h4>
                     {headerParams.map(p => renderParamInput(p, values, handleChange))}
                 </div>
@@ -55,7 +56,7 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
                         className="param-section-title clickable"
                         onClick={() => setExpandedBody(!expandedBody)}
                     >
-                        <span className="param-icon">📦</span> Request Body
+                        <span className="param-icon"><PackageIcon size={14} /></span> Request Body
                         <span className="expand-icon">{expandedBody ? '▾' : '▸'}</span>
                     </h4>
                     {expandedBody && (
@@ -68,7 +69,7 @@ export default function ParameterForm({ endpoint, values, onChange }: Props) {
 
             {pathParams.length === 0 && queryParams.length === 0 && headerParams.length === 0 && !endpoint.requestBody && (
                 <div className="no-params">
-                    <span className="no-params-icon">✨</span>
+                    <span className="no-params-icon"><SparklesIcon size={22} /></span>
                     <p>This endpoint has no parameters — just hit Try It!</p>
                 </div>
             )}

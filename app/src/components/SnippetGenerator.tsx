@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '@/context/ApiContext';
 import { generateSnippets } from '@/lib/generators/curl-generator';
+import { TerminalIcon, CheckIcon, ClipboardIcon } from '@/components/Icons';
 
 interface Props {
     paramValues: Record<string, string>;
@@ -30,6 +31,12 @@ export default function SnippetGenerator({ paramValues }: Props) {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const tabLabels: Record<SnippetTab, string> = {
+        curl: 'curl',
+        python: 'Python',
+        typescript: 'TypeScript',
+    };
+
     return (
         <div className="snippet-generator">
             <div className="snippet-tabs">
@@ -39,13 +46,13 @@ export default function SnippetGenerator({ paramValues }: Props) {
                         className={`snippet-tab ${activeTab === tab ? 'active' : ''}`}
                         onClick={() => setActiveTab(tab)}
                     >
-                        {tab === 'curl' ? '🔗 curl' : tab === 'python' ? '🐍 Python' : '📘 TypeScript'}
+                        {tab === 'curl' ? <><TerminalIcon size={13} /> {tabLabels[tab]}</> : tabLabels[tab]}
                     </button>
                 ))}
             </div>
             <div className="snippet-content">
                 <button className="copy-button" onClick={handleCopy}>
-                    {copied ? '✅ Copied!' : '📋 Copy'}
+                    {copied ? <><CheckIcon size={13} /> Copied!</> : <><ClipboardIcon size={13} /> Copy</>}
                 </button>
                 <pre className="snippet-code"><code>{code}</code></pre>
             </div>

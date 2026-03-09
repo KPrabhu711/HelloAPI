@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApi } from '@/context/ApiContext';
 import { LearningPath, LearningStep } from '@/lib/types';
+import { BookOpenIcon, PlugIcon, EditIcon, InfoIcon } from '@/components/Icons';
 
 export default function LearningPathView() {
     const { learningPaths, selectEndpoint, spec } = useApi();
@@ -13,7 +14,7 @@ export default function LearningPathView() {
         return (
             <div className="learning-paths empty">
                 <div className="empty-state">
-                    <span className="empty-icon">📚</span>
+                    <span className="empty-icon"><BookOpenIcon size={28} /></span>
                     <h3>No Learning Paths Available</h3>
                     <p>Learning paths are auto-generated from your API spec. Upload a spec with more endpoints to unlock guided learning.</p>
                 </div>
@@ -56,6 +57,12 @@ export default function LearningPathView() {
         }
     };
 
+    const getStepBadge = (type: string) => {
+        if (type === 'endpoint') return <PlugIcon size={16} />;
+        if (type === 'exercise') return <EditIcon size={16} />;
+        return <InfoIcon size={16} />;
+    };
+
     return (
         <div className="learning-path-view">
             <div className="path-header">
@@ -70,7 +77,7 @@ export default function LearningPathView() {
             </div>
 
             <div className="step-content">
-                <div className="step-badge">{step.type === 'endpoint' ? '🔌' : step.type === 'exercise' ? '✏️' : 'ℹ️'}</div>
+                <div className="step-badge">{getStepBadge(step.type)}</div>
                 <h3 className="step-title">{step.title}</h3>
                 <p className="step-description">{step.description}</p>
                 <div className="step-body">

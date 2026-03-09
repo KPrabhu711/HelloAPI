@@ -1,37 +1,41 @@
-// ─── Google Gemini AI Client for HelloAPI ───
+// ─── Groq AI Client for HelloAPI ───
 // Provides AI-powered endpoint explanations and error troubleshooting
-// using Google Gemini (free tier).
+// using Groq (fast inference).
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { Endpoint, ApiSpec } from './types';
 
 // ─── Configuration ───
-const API_KEY = process.env.GEMINI_API_KEY || '';
-const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+const API_KEY = process.env.GROQ_API_KEY || '';
+const MODEL_NAME = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-let genAI: GoogleGenerativeAI | null = null;
+let groq: Groq | null = null;
 
-function getClient(): GoogleGenerativeAI {
+function getClient(): Groq {
     if (!API_KEY) {
-        throw new Error('GEMINI_API_KEY environment variable is not set. Get a free key at https://aistudio.google.com/apikey');
+        throw new Error('GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com/keys');
     }
-    if (!genAI) {
-        genAI = new GoogleGenerativeAI(API_KEY);
+    if (!groq) {
+        groq = new Groq({ apiKey: API_KEY });
     }
-    return genAI;
+    return groq;
 }
 
-// ─── Helper: Invoke Gemini ───
+// ─── Helper: Invoke Groq ───
 async function invokeModel(prompt: string): Promise<string> {
     const client = getClient();
-    const model = client.getGenerativeModel({ model: MODEL_NAME });
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const chatCompletion = await client.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: MODEL_NAME,
+        temperature: 0.3,
+        max_tokens: 1024,
+    });
+
+    const text = chatCompletion.choices[0]?.message?.content;
 
     if (!text) {
-        throw new Error('Empty response from Gemini model');
+        throw new Error('Empty response from Groq model');
     }
 
     return text;
@@ -85,21 +89,19 @@ export async function explainEndpoint(
     endpoint: Endpoint,
     spec: Partial<ApiSpec>
 ): Promise<string> {
-    const prompt = `You are an expert API documentation assistant. Given the following API context and endpoint details, provide a clear, developer-friendly explanation.
+    const prompt = `You are an API documentation assistant. Explain this endpoint concisely.
 
-API Context:
-${buildApiContext(spec)}
+API: ${buildApiContext(spec)}
 
 Endpoint:
 ${buildEndpointContext(endpoint)}
 
-Provide a concise explanation covering:
-1. **What it does** — a plain-English summary of this endpoint's purpose
-2. **Common use cases** — 2-3 typical scenarios when a developer would use this
-3. **Important notes** — any caveats, gotchas, or best practices (auth requirements, pagination, rate limits)
-4. **Quick example** — a brief description of a typical request/response flow
+Provide:
+1. **Purpose** — one-sentence summary
+2. **Use cases** — 2 brief scenarios
+3. **Notes** — key caveats (auth, limits, gotchas)
 
-Keep the response focused and under 250 words. Use markdown formatting.`;
+Keep under 150 words. Use markdown.`;
 
     return invokeModel(prompt);
 }
@@ -111,27 +113,19 @@ export async function troubleshootError(
     endpoint: Endpoint,
     spec: Partial<ApiSpec>
 ): Promise<string> {
-    const prompt = `You are an expert API debugging assistant. A developer received an error while calling an API endpoint. Help them understand and fix the issue.
+    const prompt = `You are an API debugging assistant. A developer got an error calling an endpoint.
 
-API Context:
-${buildApiContext(spec)}
+API: ${buildApiContext(spec)}
+Endpoint: ${endpoint.method} ${endpoint.path} (auth: ${endpoint.auth ? 'yes' : 'no'})
+Error: ${statusCode}
+Body: ${typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody, null, 2)}
 
-Endpoint called:
-${endpoint.method} ${endpoint.path}
-Auth required: ${endpoint.auth ? 'Yes' : 'No'}
+Provide:
+1. **What happened** — one sentence
+2. **Likely cause** — most probable reason
+3. **Fix** — actionable steps
 
-Error received:
-Status code: ${statusCode}
-Response body:
-${typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody, null, 2)}
-
-Provide actionable troubleshooting guidance:
-1. **What happened** — explain the error in plain English
-2. **Most likely cause** — based on the status code and response
-3. **How to fix it** — specific, actionable steps the developer should take
-4. **Prevention tip** — one thing to do differently next time
-
-Keep the response focused and under 200 words. Use markdown formatting.`;
+Keep under 120 words. Use markdown.`;
 
     return invokeModel(prompt);
 }
